@@ -67,6 +67,15 @@ def create_new_payment(
     )
     crypto_code = get_backend_config(crypto, key="CODE")
     backend_obj = get_backend_obj(crypto)
+    
+    # fee
+    fee_fix = get_backend_config(crypto, key="FEE")
+    fee_pct = get_backend_config(crypto, key="FEE_PCT")
+    fiat_amount = float(fiat_amount)
+    if fee_pct is not None and fee_pct > 0:
+        fiat_amount += fiat_amount * (fee_pct / 100.0)
+    if fee_fix is not None and fee_fix > 0:
+        fiat_amount += fee_fix
 
     crypto_amount = backend_obj.convert_from_fiat(fiat_amount, fiat_currency)
     address = None
