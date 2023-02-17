@@ -88,7 +88,7 @@ class CryptoCurrencyPaymentTask:
         for payment in payments:
             status, value = self.backend_obj.confirm_address_payment(
                 address=payment.address,
-                total_crypto_amount=payment.crypto_amount,
+                total_crypto_amount=float(payment.crypto_amount),
                 confirmation_number=self.confirmation_number,
                 accept_confirmed_bal_without_hash_mins=self.confirm_bal_without_hash_mins,
                 tx_hash=payment.tx_hash,
