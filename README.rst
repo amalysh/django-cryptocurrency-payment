@@ -44,6 +44,9 @@ Add it to your `INSTALLED_APPS`:
         "BITCOIN": {
             "CODE": "btc",
             "BACKEND": "merchant_wallet.backends.btc.BitcoinBackend",
+            "CRYPTO_LOGO_URL": "https://bitcoinsymbol.org/i/old-bitcoin-logo.svg",
+            "EXPLORER_URL": "https://live.blockcypher.com/btc/tx/{tx_hash}/",
+            "PAYMENT_URI": "bitcoin:{address}?amount={crypto_amount}&label={payment_title}&message={payment_description}",
             "FEE": 0.00,
             "REFRESH_PRICE_AFTER_MINUTE": 15,
             "REUSE_ADDRESS": False,
