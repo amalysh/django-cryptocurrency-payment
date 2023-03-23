@@ -3,7 +3,7 @@ from urllib.parse import quote as urlencode
 from django.views.generic import DetailView
 from django.http import Http404
 from cryptocurrency_payment.models import CryptoCurrencyPayment
-from cryptocurrency_payment.app_settings import get_backend_config
+from cryptocurrency_payment.app_settings import get_backend_config, get_backend_obj
 
 
 class CryptoPaymentDetailView(DetailView):
@@ -24,16 +24,12 @@ class CryptoPaymentDetailView(DetailView):
     def get_context_data(self, **kwargs):
         
         context = super(CryptoPaymentDetailView, self).get_context_data(**kwargs)
+        backend_obj = get_backend_obj(self.object.crypto)
         # misc config variables
         misc_config = {
             "logo_url": get_backend_config(self.object.crypto, key='CRYPTO_LOGO_URL'),
             "explorer_url": get_backend_config(self.object.crypto, key='EXPLORER_URL').format(tx_hash=self.object.tx_hash),
-            "payment_uri": get_backend_config(self.object.crypto, key='PAYMENT_URI').format(
-                address=self.object.address,
-                crypto_amount=self.object.crypto_amount,
-                payment_title=urlencode(self.object.payment_title),
-                payment_description=urlencode(self.object.payment_description),
-            ),
+            "payment_uri": backend_obj.create_payment_uri(self.object.address, self.object.crypto_amount),
         }
         context['backend_config'] = misc_config
         

@@ -4,8 +4,6 @@ from hdwallet import HDWallet
 
 
 def get_settings():
-
-
     return getattr(settings, "CRYPTOCURRENCY_PAYMENT", {})
 
 
