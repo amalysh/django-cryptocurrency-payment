@@ -51,7 +51,7 @@ setup(
     long_description=readme + '\n\n' + history,
     author='Yomi Daniel',
     author_email='yomid4all@gamil.com',
-    url='https://github.com/ydaniels/django-cryptocurrency-payment',
+    url='https://github.com/amalysh/django-cryptocurrency-payment',
     packages=[
         'cryptocurrency_payment',
     ],
