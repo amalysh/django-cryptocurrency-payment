@@ -69,13 +69,9 @@ def create_new_payment(
     backend_obj = get_backend_obj(crypto)
     
     # fee
-    fee_fix = get_backend_config(crypto, key="FEE")
-    fee_pct = get_backend_config(crypto, key="FEE_PCT")
-    fiat_amount = float(fiat_amount)
-    if fee_pct is not None and fee_pct > 0:
-        fiat_amount += fiat_amount * (fee_pct / 100.0)
-    if fee_fix is not None and fee_fix > 0:
-        fiat_amount += fee_fix
+    fee_fix = get_backend_config(crypto, key="FEE") or 0
+    fee_pct = get_backend_config(crypto, key="FEE_PCT") or 0
+    fiat_amount = float(fiat_amount) + max(fee_fix, fiat_amount * (fee_pct / 100.0))
 
     crypto_amount = backend_obj.convert_from_fiat(fiat_amount, fiat_currency)
     address = None
@@ -87,7 +83,7 @@ def create_new_payment(
         address = parent_payment.address
         resuse_address = True
     if not address and crypto_reuse_address is True:
-        address = CryptoCurrencyPayment.get_crypto_reused_address(crypto)
+        address = CryptoCurrencyPayment.get_crypto_reused_address(crypto, user=user)
         resuse_address = address is not None
     if not address:
         address_generated_count = (
@@ -191,15 +187,18 @@ class CryptoCurrencyPayment(models.Model):
         )
 
     @classmethod
-    def get_crypto_reused_address(cls, crypto):
+    def get_crypto_reused_address(cls, crypto, user=None):
         """
         Get an address from old paid transaction when reusing address
         :param crypto: The crypto to get its address
         :return:
         """
 
+        qset = cls.objects.filter(crypto=crypto, status=cls.PAYMENT_PAID)
+        if user:
+            qset = qset.filter(user=user)
         previous_payment = (
-            cls.objects.filter(crypto=crypto, status=cls.PAYMENT_PAID)
+            qset
             .order_by("updated_at")
             .first()
         )
