@@ -1,5 +1,6 @@
 from cryptocurrency_payment.models import CryptoCurrencyPayment
 from django.utils import timezone
+from django.db.models import Q
 from cryptocurrency_payment.models import create_child_payment
 from datetime import timedelta
 from cryptocurrency_payment.app_settings import get_active_backends, get_backend_config, get_backend_obj
@@ -66,6 +67,7 @@ class CryptoCurrencyPaymentTask:
         self.confirm_bal_without_hash_mins = get_backend_config(
             crypto, "IGNORE_CONFIRMED_BALANCE_WITHOUT_SAVED_HASH_MINS"
         )
+        # TODO add throttling to prevent overloading the backend
 
     def update_crypto_currency_payment_status(self):
         """
@@ -77,14 +79,19 @@ class CryptoCurrencyPaymentTask:
         """
         yesterday_time = timezone.now() - timedelta(hours=self.unpaid_payment_hrs)
         payments = CryptoCurrencyPayment.objects.filter(
-            crypto=self.crypto,
-            status__in=[
-                CryptoCurrencyPayment.PAYMENT_NEW,
-                CryptoCurrencyPayment.PAYMENT_PROCESSING,
-                CryptoCurrencyPayment.PAYMENT_WAIT
-            ],
-            created_at__gte=yesterday_time,
-        ).all()
+            crypto=self.crypto
+        ).filter(
+            Q(
+                status__in=[
+                    CryptoCurrencyPayment.PAYMENT_NEW,
+                    CryptoCurrencyPayment.PAYMENT_PROCESSING,
+                    CryptoCurrencyPayment.PAYMENT_WAIT
+                ],
+                created_at__gte=yesterday_time
+            ) | Q(
+                status=CryptoCurrencyPayment.PAYMENT_PROCESSING, tx_hash__isnull=False
+            ),
+        ).order_by('tx_hash').all()
         for payment in payments:
             status, value = self.backend_obj.confirm_address_payment(
                 address=payment.address,
