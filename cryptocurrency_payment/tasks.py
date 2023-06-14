@@ -1,3 +1,5 @@
+import logging
+
 from cryptocurrency_payment.models import CryptoCurrencyPayment
 from django.utils import timezone
 from django.db.models import Q
@@ -5,6 +7,7 @@ from cryptocurrency_payment.models import create_child_payment
 from datetime import timedelta
 from cryptocurrency_payment.app_settings import get_active_backends, get_backend_config, get_backend_obj
 
+logger = logging.getLogger(__name__)
 
 def update_payment_status():
     """
@@ -93,37 +96,40 @@ class CryptoCurrencyPaymentTask:
             ),
         ).order_by('tx_hash').all()
         for payment in payments:
-            status, value = self.backend_obj.confirm_address_payment(
-                address=payment.address,
-                total_crypto_amount=float(payment.crypto_amount),
-                confirmation_number=self.confirmation_number,
-                accept_confirmed_bal_without_hash_mins=self.confirm_bal_without_hash_mins,
-                tx_hash=payment.tx_hash,
-            )
-            if status == self.backend_obj.UNCONFIRMED_ADDRESS_BALANCE:
-                payment.status = payment.PAYMENT_PROCESSING
-                payment.tx_hash = value
-            elif status == self.backend_obj.CONFIRMED_ADDRESS_BALANCE:
-                payment.status = payment.PAYMENT_PAID
-                payment.paid_crypto_amount = value
-            elif status == self.backend_obj.UNDERPAID_ADDRESS_BALANCE:
-                fiat_value = self.backend_obj.convert_to_fiat(
-                    value, payment.fiat_currency
+            try:
+                status, value = self.backend_obj.confirm_address_payment(
+                    address=payment.address,
+                    total_crypto_amount=float(payment.crypto_amount),
+                    confirmation_number=self.confirmation_number,
+                    accept_confirmed_bal_without_hash_mins=self.confirm_bal_without_hash_mins,
+                    tx_hash=payment.tx_hash,
                 )
-                if (
-                    self.create_new_underpayment
-                    and fiat_value > self.ignore_underpayment_amount
-                ):
-                    payment.child_payment = create_child_payment(payment, fiat_value)
-                payment.status = payment.PAYMENT_PAID
-                payment.paid_crypto_amount = value
-            elif status == self.backend_obj.NO_HASH_ADDRESS_BALANCE:
-                payment.status = payment.PAYMENT_WAIT
-                payment.save() #no payment found yet
-            else:
-                # unknown error occured cancel payment
-                payment.status = payment.PAYMENT_CANCELLED
-            payment.save()
+                if status == self.backend_obj.UNCONFIRMED_ADDRESS_BALANCE:
+                    payment.status = payment.PAYMENT_PROCESSING
+                    payment.tx_hash = value
+                elif status == self.backend_obj.CONFIRMED_ADDRESS_BALANCE:
+                    payment.status = payment.PAYMENT_PAID
+                    payment.paid_crypto_amount = value
+                elif status == self.backend_obj.UNDERPAID_ADDRESS_BALANCE:
+                    fiat_value = self.backend_obj.convert_to_fiat(
+                        value, payment.fiat_currency
+                    )
+                    if (
+                        self.create_new_underpayment
+                        and fiat_value > self.ignore_underpayment_amount
+                    ):
+                        payment.child_payment = create_child_payment(payment, fiat_value)
+                    payment.status = payment.PAYMENT_PAID
+                    payment.paid_crypto_amount = value
+                elif status == self.backend_obj.NO_HASH_ADDRESS_BALANCE:
+                    payment.status = payment.PAYMENT_WAIT
+                    payment.save() #no payment found yet
+                else:
+                    # unknown error occured cancel payment
+                    payment.status = payment.PAYMENT_CANCELLED
+                payment.save()
+            except Exception as exc:
+                logger.exception(f"Unable to process payment status update for payment #{payment.pk}")
 
     def cancel_unpaid_payment(self):
         """
