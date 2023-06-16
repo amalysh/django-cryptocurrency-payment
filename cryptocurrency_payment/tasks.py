@@ -123,6 +123,7 @@ class CryptoCurrencyPaymentTask:
                     payment.paid_crypto_amount = value
                 elif status == self.backend_obj.NO_HASH_ADDRESS_BALANCE:
                     payment.status = payment.PAYMENT_WAIT
+                    payment.tx_hash = None
                     payment.save() #no payment found yet
                 else:
                     # unknown error occured cancel payment
