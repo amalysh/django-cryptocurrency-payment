@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
 from urllib.parse import quote as urlencode
 from django.views.generic import DetailView
 from django.http import Http404
@@ -25,6 +26,12 @@ class CryptoPaymentDetailView(DetailView):
         
         context = super(CryptoPaymentDetailView, self).get_context_data(**kwargs)
         backend_obj = get_backend_obj(self.object.crypto)
+        
+        # added address validity
+        unpaid_payment_hrs = get_backend_config(self.object.crypto, key='CANCEL_UNPAID_PAYMENT_HRS')
+        address_validity = self.object.created_at + timedelta(hours=unpaid_payment_hrs)
+        context['address_validity'] = address_validity
+        
         # misc config variables
         misc_config = {
             "logo_url": get_backend_config(self.object.crypto, key='CRYPTO_LOGO_URL'),

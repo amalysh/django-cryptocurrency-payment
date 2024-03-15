@@ -146,6 +146,10 @@
             <div class="abf-label">Date:</div>
             <div class="abf-value">{{payment.created_at}}</div>
           </div>
+          <div class="abf-list-item">
+            <div class="abf-label">Address valid until:</div>
+            <div class="abf-value"><b>{{address_validity}}</b></div>
+          </div>
               {% if payment.tx_hash %}
                    <div class="abf-list-item abf-tx-block">
             <div class="abf-label">Transaction(s):</div>
@@ -159,9 +163,9 @@
           <div class="abf-list-item">
             <div class="abf-label">Status:</div>
             <div class="abf-value"><b><span class="abf-status">{{payment.status | title}}</span>
-            {% if payment.status != 'paid' or  payment.status != 'cancelled'  %}
+            {% if payment.status != 'paid' and payment.status != 'cancelled'  %}
               <br /><small style="color:blue">Confirmation may take 10m-20m</small>
-              {% endif %}
+            {% endif %}
             </b>
              <br />
              {% if payment.parent_payment %}
