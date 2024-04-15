@@ -102,7 +102,11 @@
       <div>
         <div class="abf-ash1"><img src="{{backend_config.logo_url}}" width="50" alt=""></div>
       </div>
-      <div style="text-align: center; background-color:#fff;"><span class="abf-qr"> <img class="abf-img-height" src="https://chart.googleapis.com/chart?chs=100x100&cht=qr&chl={{backend_config.payment_uri}}" style="display: inline;" alt="QR code for payment"> </span> </div>
+      <div style="text-align: center; background-color:#fff;">
+        <span class="abf-qr">
+          <img class="abf-img-height" src="data:image/png;base64,{{ backend_config.qr_image_base64 }}" alt="{{ backend_config.payment_uri }}">
+        </span>
+      </div>
     </div>
     <div class="abf-form">
       <div class="abf-ash1"> Please send <strong><span class="abf-totalbtc">{{payment.crypto_amount}}</span></strong> {{payment.crypto_code}}

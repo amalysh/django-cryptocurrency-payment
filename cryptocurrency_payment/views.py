@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import timedelta
+import base64
+import qrcode
+from io import BytesIO
 from urllib.parse import quote as urlencode
 from django.views.generic import DetailView
 from django.http import Http404
@@ -12,6 +15,25 @@ class CryptoPaymentDetailView(DetailView):
     context_object_name = 'payment'
     template_name = 'cryptocurrency_payment/payment_detail.html'
 
+    def get_qrcode_base64(self, qr_text, box_size=100):
+        """generate qr code image and return base64 encoded string
+
+        Args:
+            qr_text (str): text to code into
+            box_size (int, optional): _description_. Defaults to 100.
+
+        Returns:
+            str: base64 encoded qr code image
+        """
+        qr_image = qrcode.make(qr_text, box_size=box_size)
+        qr_image_pil = qr_image.get_image()
+        stream = BytesIO()
+        qr_image_pil.save(stream, format='PNG')
+        qr_image_data = stream.getvalue()
+        qr_image_base64 = base64.b64encode(qr_image_data).decode('utf-8')
+        
+        return qr_image_base64
+ 
     def get_object(self, *args ):
 
         obj = super(CryptoPaymentDetailView, self).get_object( *args )
@@ -37,6 +59,7 @@ class CryptoPaymentDetailView(DetailView):
             "logo_url": get_backend_config(self.object.crypto, key='CRYPTO_LOGO_URL'),
             "explorer_url": get_backend_config(self.object.crypto, key='EXPLORER_URL').format(tx_hash=self.object.tx_hash),
             "payment_uri": backend_obj.create_payment_uri(self.object.address, self.object.crypto_amount),
+            "qr_image_base64": self.get_qrcode_base64(backend_obj.create_payment_uri(self.object.address, self.object.crypto_amount)),
         }
         context['backend_config'] = misc_config
         
