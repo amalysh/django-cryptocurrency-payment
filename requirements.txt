@@ -1,3 +1,4 @@
 django
 merchant-wallet
 hdwallet
+qrcode
