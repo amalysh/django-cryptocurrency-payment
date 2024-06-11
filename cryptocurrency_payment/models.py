@@ -75,16 +75,16 @@ def create_new_payment(
 
     crypto_amount = backend_obj.convert_from_fiat(fiat_amount, fiat_currency)
     address = None
-    resuse_address = False
+    reuse_address = False
     related_object_id = None
     if related_object:
         related_object_id = related_object.pk
     if parent_payment:
         address = parent_payment.address
-        resuse_address = True
+        reuse_address = True
     if not address and crypto_reuse_address is True:
         address = CryptoCurrencyPayment.get_crypto_reused_address(crypto, user=user)
-        resuse_address = address is not None
+        reuse_address = address is not None
     if not address:
         address_generated_count = (
             address_index or CryptoCurrencyPayment.get_address_used_count(crypto)
@@ -103,7 +103,7 @@ def create_new_payment(
         fiat_currency=fiat_currency,
         payment_title=payment_title,
         payment_description=payment_description,
-        address_reused=resuse_address,
+        address_reused=reuse_address,
         user=user,
         object_id=related_object_id,
         content_object=related_object,
