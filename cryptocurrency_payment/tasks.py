@@ -111,16 +111,23 @@ class CryptoCurrencyPaymentTask:
                     payment.status = payment.PAYMENT_PAID
                     payment.paid_crypto_amount = value
                 elif status == self.backend_obj.UNDERPAID_ADDRESS_BALANCE:
-                    fiat_value = self.backend_obj.convert_to_fiat(
-                        value, payment.fiat_currency
+                    remaining_value = value
+                    remaining_fiat_value = self.backend_obj.convert_to_fiat(
+                        remaining_value, payment.fiat_currency
                     )
+                    # update paid amount and create new payment if necessary
+                    payment.paid_crypto_amount = float(payment.crypto_amount) - remaining_value
                     if (
                         self.create_new_underpayment
-                        and fiat_value > self.ignore_underpayment_amount
+                        and remaining_fiat_value > self.ignore_underpayment_amount
                     ):
-                        payment.child_payment = create_child_payment(payment, fiat_value)
-                    payment.status = payment.PAYMENT_PAID
-                    payment.paid_crypto_amount = value
+                        payment.child_payment = create_child_payment(payment, remaining_fiat_value)
+                        # mark the payment as paid
+                        payment.status = payment.PAYMENT_PAID
+                    elif remaining_fiat_value <= self.ignore_underpayment_amount:
+                        payment.status = payment.PAYMENT_PAID
+                    # TODO what is to do with the remaining amount ???? if it is not ignored or a new payment is not created
+                    #else:
                 elif status == self.backend_obj.NO_HASH_ADDRESS_BALANCE:
                     payment.status = payment.PAYMENT_WAIT
                     payment.tx_hash = None
