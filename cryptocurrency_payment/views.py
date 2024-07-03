@@ -56,6 +56,7 @@ class CryptoPaymentDetailView(DetailView):
         
         # misc config variables
         misc_config = {
+            "note": get_backend_config(self.object.crypto).get('NOTE', None),
             "logo_url": get_backend_config(self.object.crypto, key='CRYPTO_LOGO_URL'),
             "explorer_url": get_backend_config(self.object.crypto, key='EXPLORER_URL').format(tx_hash=self.object.tx_hash),
             "payment_uri": backend_obj.create_payment_uri(self.object.address, self.object.crypto_amount),

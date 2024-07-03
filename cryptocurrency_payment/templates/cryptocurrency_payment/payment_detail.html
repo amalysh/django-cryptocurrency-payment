@@ -112,6 +112,9 @@
       <div class="abf-ash1"> Please send <strong><span class="abf-totalbtc">{{payment.crypto_amount}}</span></strong> {{payment.crypto_code}}
         to address: </div>
       <div class="abf-address abf-topline abf-ash2 abf-input-address"><a href="{{backend_config.payment_uri}}"> {{payment.address}}</a></div>
+      {% if backend_config.note %}
+        <div class="abf-ash1 abf-topline"><span style="color:blue;">{{backend_config.note}}</span></div>
+      {% endif %}
       <div class="abf-data abf-topline">
         <div class="abf-list">
            {% if payment.payment_title %}
